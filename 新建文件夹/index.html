@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Adverse Reaction Platform</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "header header"
+                "sidebar main"
+                "footer footer";
+            height: 100vh;
+            gap: 15px;
+            padding: 15px;
+        }
+        
+        header {
+            grid-area: header;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-icon {
+            margin-right: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .sidebar {
+            grid-area: sidebar;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .filter-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--dark-color);
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .filter-title i {
+            margin-right: 8px;
+            color: var(--secondary-color);
+        }
+        
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: var(--light-color);
+            width: 100%;
+        }
+        
+        .select-hint {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: -5px;
+            margin-bottom: 5px;
+        }
+        
+        .drug-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .drug-item {
+            padding: 10px;
+            background: var(--light-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        
+        .drug-item:hover {
+            background: #d5e6f7;
+        }
+        
+        .drug-item.single-active {
+            background: var(--secondary-color);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .drug-name {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 350px;
+            font-size: 0.9rem;
+        }
+        
+        .drug-name i {
+            margin-right: 8px;
+        }
+        
+        .drug-meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+            width: 100%;
+        }
+        
+        .drug-item.single-active .drug-meta {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .target-name {
+            font-style: italic;
+        }
+        
+        .main-content {
+            grid-area: main;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #sankey-container {
+            flex: 1;
+            min-height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #sankey-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            flex-direction: column;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        footer {
+            grid-area: footer;
+            background: var(--dark-color);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .language-toggle {
+            color: white;
+            cursor: pointer;
+            margin-left: 15px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        .algorithm-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 5px 0;
+        }
+
+        .algorithm-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .error-message {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .error-message i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .debug-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-pills logo-icon"></i>
+                Drug Adverse Reaction Platform
+            </div>
+            <div>
+                <div class="language-toggle">EN</div>
+            </div>
+        </header>
+        
+        <aside class="sidebar">
+            <div class="filter-section">
+                <div class="filter-title">
+                    <i class="fas fa-database"></i>
+                    Database (Single Select)
+                </div>
+                <select id="database-select">
+                    <option value="FAERS">FAERS</option>
+                    <option value="JADER">JADER</option>
+                </select>
+                <div class="select-hint">
+                    Hint: Select a database to load corresponding drugs and targets
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-title">
+                    <i class="fas fa-crosshairs"></i>
+                    Target (Single Select)
+                </div>
+                <select id="target-select">
+                    <option value="all">All Targets</option>
+                    <option value="EGFR">EGFR</option>
+                    <option value="ALK">ALK</option>
+                    <option value="ROS1">ROS1</option>
+                    <option value="MET">MET</option>
+                    <option value="RET">RET</option>
+                    <option value="KRAS">KRAS</option>
+                    <option value="HER2">HER2</option>
+                    <option value="NTRK">NTRK</option>
+                    <option value="BRAF">BRAF</option>
+                </select>
+                <div class="select-hint">
+                    Hint: Select a single target to filter drugs
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-title">
+                    <i class="fas fa-capsules"></i>
+                    Drug List (Single Select)
+                </div>
+                <div class="drug-list" id="drug-list">
+                    <!-- EGFR Drugs -->
+                    <div class="drug-item single-active" data-drug="Afatinib" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Afatinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Amivantamab" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Amivantamab</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Osimertinib" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Osimertinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Bevacizumab" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Bevacizumab</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Dacomitinib" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Dacomitinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Erlotinib" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Erlotinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Gefitinib" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Gefitinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Ramucirumab" data-target="EGFR">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Ramucirumab</div>
+                        <div class="drug-meta"><span class="target-name">Target: EGFR</span></div>
+                    </div>
+
+                    <!-- ALK Drugs -->
+                    <div class="drug-item" data-drug="Alectinib" data-target="ALK">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Alectinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: ALK</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Brigatinib" data-target="ALK">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Brigatinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: ALK</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Crizotinib" data-target="ALK">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Crizotinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: ALK</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Lorlatinib" data-target="ALK">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Lorlatinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: ALK</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Ceritinib" data-target="ALK">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Ceritinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: ALK</span></div>
+                    </div>
+
+                    <!-- ROS1 Drugs -->
+                    <div class="drug-item" data-drug="Entrectinib" data-target="ROS1">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Entrectinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: ROS1</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Repotrectinib" data-target="ROS1">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Repotrectinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: ROS1</span></div>
+                    </div>
+
+                    <!-- MET Drugs -->
+                    <div class="drug-item" data-drug="Capmatinib" data-target="MET">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Capmatinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: MET</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Tepotinib" data-target="MET">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Tepotinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: MET</span></div>
+                    </div>
+
+                    <!-- RET Drugs -->
+                    <div class="drug-item" data-drug="Cabozantinib" data-target="RET">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Cabozantinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: RET</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Pralsetinib" data-target="RET">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Pralsetinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: RET</span></div>
+                    </div>
+
+                    <!-- KRAS Drugs -->
+                    <div class="drug-item" data-drug="Adagrasib" data-target="KRAS">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Adagrasib</div>
+                        <div class="drug-meta"><span class="target-name">Target: KRAS</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Sotorasib" data-target="KRAS">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Sotorasib</div>
+                        <div class="drug-meta"><span class="target-name">Target: KRAS</span></div>
+                    </div>
+
+                    <!-- BRAF Drugs -->
+                    <div class="drug-item" data-drug="Binimetinib" data-target="BRAF">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Binimetinib</div>
+                        <div class="drug-meta"><span class="target-name">Target: BRAF</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Dabrafenib" data-target="BRAF">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Dabrafenib</div>
+                        <div class="drug-meta"><span class="target-name">Target: BRAF</span></div>
+                    </div>
+                    <div class="drug-item" data-drug="Encorafenib" data-target="BRAF">
+                        <div class="drug-name"><i class="fas fa-pills"></i>Encorafenib</div>
+                        <div class="drug-meta"><span class="target-name">Target: BRAF</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-title">
+                    <i class="fas fa-calculator"></i>
+                    Algorithm
+                </div>
+                <div class="algorithm-checkboxes">
+                    <div class="algorithm-checkbox">
+                        <input type="checkbox" id="ror-checkbox" checked disabled>
+                        <label for="ror-checkbox">ROR</label>
+                    </div>
+                    <div class="algorithm-checkbox">
+                        <input type="checkbox" id="prr-checkbox" checked disabled>
+                        <label for="prr-checkbox">PRR</label>
+                    </div>
+                    <div class="algorithm-checkbox">
+                        <input type="checkbox" id="bcpnn-checkbox" checked disabled>
+                        <label for="bcpnn-checkbox">BCPNN</label>
+                    </div>
+                    <div class="algorithm-checkbox">
+                        <input type="checkbox" id="mgps-checkbox" checked disabled>
+                        <label for="mgps-checkbox">MGPS</label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <div id="sankey-container">
+                <div class="loading">
+                    <i class="fas fa-circle-notch"></i>
+                    <span>Loading visualization...</span>
+                </div>
+                <iframe id="sankey-frame" style="display: none;"></iframe>
+            </div>
+        </main>
+        
+        <footer>
+            Drug Adverse Reaction Platform © 2025 | For research purposes only
+        </footer>
+    </div>
+
+    <script>
+        let currentDatabase = "FAERS";
+
+        const databaseDrugFileMap = {
+            "FAERS": {
+                "Afatinib": "FAERS/sankey_Afatinib.html",
+                "Amivantamab": "FAERS/sankey_Amivantamab.html",
+                "Osimertinib": "FAERS/sankey_Osimertinib.html",
+                "Bevacizumab": "FAERS/sankey_Bevacizumab.html",
+                "Dacomitinib": "FAERS/sankey_Dacomitinib.html",
+                "Erlotinib": "FAERS/sankey_Erlotinib.html",
+                "Gefitinib": "FAERS/sankey_Gefitinib.html",
+                "Ramucirumab": "FAERS/sankey_Ramucirumab.html",
+                "Alectinib": "FAERS/sankey_Alectinib.html",
+                "Brigatinib": "FAERS/sankey_Brigatinib.html",
+                "Crizotinib": "FAERS/sankey_Crizotinib.html",
+                "Lorlatinib": "FAERS/sankey_Lorlatinib.html",
+                "Ceritinib": "FAERS/sankey_Ceritinib.html",
+                "Entrectinib": "FAERS/sankey_Entrectinib.html",
+                "Repotrectinib": "FAERS/sankey_Repotrectinib.html",
+                "Capmatinib": "FAERS/sankey_Capmatinib.html",
+                "Tepotinib": "FAERS/sankey_Tepotinib.html",
+                "Cabozantinib": "FAERS/sankey_Cabozantinib.html",
+                "Pralsetinib": "FAERS/sankey_Pralsetinib.html",
+                "Adagrasib": "FAERS/sankey_Adagrasib.html",
+                "Sotorasib": "FAERS/sankey_Sotorasib.html",
+                "Binimetinib": "FAERS/sankey_Binimetinib.html",
+                "Dabrafenib": "FAERS/sankey_Dabrafenib.html",
+                "Encorafenib": "FAERS/sankey_Encorafenib.html"
+            },
+            "JADER": {
+                "Afatinib": "JADER/sankey_Afatinib.html",
+                "Amivantamab": "JADER/sankey_Amivantamab.html",
+                "Osimertinib": "JADER/sankey_Osimertinib.html",
+                "Bevacizumab": "JADER/sankey_Bevacizumab.html",
+                "Dacomitinib": "JADER/sankey_Dacomitinib.html",
+                "Erlotinib": "JADER/sankey_Erlotinib.html",
+                "Gefitinib": "JADER/sankey_Gefitinib.html",
+                "Ramucirumab": "JADER/sankey_Ramucirumab.html",
+                "Alectinib": "JADER/sankey_Alectinib.html",
+                "Brigatinib": "JADER/sankey_Brigatinib.html",
+                "Crizotinib": "JADER/sankey_Crizotinib.html",
+                "Lorlatinib": "JADER/sankey_Lorlatinib.html",
+                "Ceritinib": "JADER/sankey_Ceritinib.html",
+                "Entrectinib": "JADER/sankey_Entrectinib.html",
+                "Repotrectinib": "JADER/sankey_Repotrectinib.html",
+                "Capmatinib": "JADER/sankey_Capmatinib.html",
+                "Tepotinib": "JADER/sankey_Tepotinib.html",
+                "Cabozantinib": "JADER/sankey_Cabozantinib.html",
+                "Pralsetinib": "JADER/sankey_Pralsetinib.html",
+                "Adagrasib": "JADER/sankey_Adagrasib.html",
+                "Sotorasib": "JADER/sankey_Sotorasib.html",
+                "Binimetinib": "JADER/sankey_Binimetinib.html",
+                "Dabrafenib": "JADER/sankey_Dabrafenib.html",
+                "Encorafenib": "JADER/sankey_Encorafenib.html"
+            }
+        };
+
+        document.querySelectorAll('.drug-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.drug-item').forEach(el => {
+                    el.classList.remove('single-active');
+                });
+                item.classList.add('single-active');
+                const selectedName = item.getAttribute('data-drug');
+                loadSankeyData(selectedName);
+            });
+        });
+
+        document.getElementById('target-select').addEventListener('change', (e) => {
+            const selectedTarget = e.target.value;
+            const drugItems = document.querySelectorAll('.drug-item');
+            
+            drugItems.forEach(item => {
+                if (selectedTarget === 'all' || item.getAttribute('data-target') === selectedTarget) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (!document.querySelector('.drug-item.single-active:not([style*="display: none"])')) {
+                const firstVisible = document.querySelector('.drug-item:not([style*="display: none"])');
+                if (firstVisible) {
+                    firstVisible.classList.add('single-active');
+                    const selectedName = firstVisible.getAttribute('data-drug');
+                    loadSankeyData(selectedName);
+                }
+            }
+        });
+
+        document.getElementById('database-select').addEventListener('change', (e) => {
+            currentDatabase = e.target.value;
+            const activeItem = document.querySelector('.drug-item.single-active');
+            if (activeItem) {
+                const selectedName = activeItem.getAttribute('data-drug');
+                loadSankeyData(selectedName);
+            }
+        });
+
+        function loadSankeyData(name) {
+            const container = document.getElementById('sankey-container');
+            const frame = document.getElementById('sankey-frame');
+            const loading = document.querySelector('.loading');
+            
+            loading.style.display = 'flex';
+            frame.style.display = 'none';
+            
+            const dbMap = databaseDrugFileMap[currentDatabase];
+            const fileName = dbMap ? dbMap[name] : null;
+            if (!fileName) {
+                loading.style.display = 'none';
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Item not found</h3>
+                        <p>No Sankey diagram file found for "${name}" in ${currentDatabase} database.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            frame.src = fileName;
+            
+            frame.onload = function() {
+                loading.style.display = 'none';
+                frame.style.display = 'block';
+            };
+            
+            frame.onerror = function() {
+                loading.style.display = 'none';
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error loading Sankey diagram</h3>
+                        <p>The file "${fileName}" could not be found or loaded.</p>
+                    </div>
+                `;
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultItem = document.querySelector('.drug-item.single-active');
+            if (defaultItem) {
+                const defaultName = defaultItem.getAttribute('data-drug');
+                loadSankeyData(defaultName);
+            }
+        });
+    </script>
+</body>
+</html>
